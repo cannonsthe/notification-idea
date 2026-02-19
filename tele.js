@@ -1,12 +1,12 @@
+require('dotenv').config();
 const TelegramBot = require('node-telegram-bot-api');
 const readline = require('readline');
-const https = require('https');
 
 // ==========================================
 // 👇 YOUR DETAILS
 // ==========================================
-const BOT_TOKEN = '8451047315:AAFuz_5Nfup5qJGT_SzwI5AHs6XHLi_iTFc';
-const MY_CHAT_ID = '526465552';
+const BOT_TOKEN = process.env.BOT_TOKEN;
+const MY_CHAT_ID = process.env.MY_CHAT_ID;
 // ==========================================
 
 // Database Simulation
