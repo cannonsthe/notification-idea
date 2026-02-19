@@ -1,0 +1,279 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>LeBag - Smart Tracker</title>
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg'><text y='32' font-size='32'>🧳</text></svg>" />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap" rel="stylesheet" />
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      font-family: 'Inter', sans-serif;
+      background-color: #0E1117;
+      color: #FFFFFF;
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+    }
+
+    /* ---- SIDEBAR ---- */
+    #sidebar {
+      position: fixed;
+      top: 0; left: 0;
+      height: 100vh;
+      width: 260px;
+      background: #161B22;
+      border-right: 1px solid #30363D;
+      padding: 28px 20px;
+      display: flex;
+      flex-direction: column;
+      gap: 24px;
+      z-index: 100;
+      box-shadow: 4px 0 20px rgba(0,0,0,0.4);
+    }
+
+    #sidebar h2 {
+      font-size: 1rem;
+      color: #8B949E;
+      letter-spacing: 0.05em;
+      text-transform: uppercase;
+    }
+
+    .toggle-row {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 12px;
+    }
+
+    .toggle-row label {
+      font-size: 0.95rem;
+      color: #E6EDF3;
+      cursor: pointer;
+    }
+
+    /* Toggle switch */
+    .switch {
+      position: relative;
+      display: inline-block;
+      width: 48px;
+      height: 26px;
+      flex-shrink: 0;
+    }
+    .switch input { opacity: 0; width: 0; height: 0; }
+    .slider {
+      position: absolute;
+      cursor: pointer;
+      inset: 0;
+      background-color: #30363D;
+      border-radius: 26px;
+      transition: 0.3s;
+    }
+    .slider::before {
+      content: "";
+      position: absolute;
+      height: 18px; width: 18px;
+      left: 4px; bottom: 4px;
+      background-color: white;
+      border-radius: 50%;
+      transition: 0.3s;
+    }
+    input:checked + .slider { background-color: #2ACAEA; }
+    input:checked + .slider.yellow { background-color: #F4D35E; }
+    input:checked + .slider::before { transform: translateX(22px); }
+
+    /* ---- MAIN CONTENT ---- */
+    #main {
+      margin-left: 260px;
+      padding: 40px 40px 60px;
+      width: calc(100% - 260px);
+      max-width: 900px;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 0;
+    }
+
+    h1.main-header {
+      font-size: 2.5rem;
+      font-weight: 700;
+      text-align: center;
+      margin-bottom: 20px;
+      text-shadow: 0px 0px 10px rgba(255,255,255,0.2);
+    }
+
+    .info-row {
+      display: flex;
+      gap: 40px;
+      margin-bottom: 24px;
+      font-size: 0.95rem;
+      color: #C9D1D9;
+    }
+    .info-row span b { color: #FFFFFF; }
+
+    hr.divider {
+      width: 100%;
+      border: none;
+      border-top: 1px solid #30363D;
+      margin-bottom: 28px;
+    }
+
+    /* ---- STATUS BOX ---- */
+    #status-box {
+      width: 100%;
+      max-width: 520px;
+      padding: 36px 24px;
+      border-radius: 18px;
+      text-align: center;
+      font-weight: 700;
+      font-size: 1.5rem;
+      margin-bottom: 28px;
+      transition: all 0.4s ease;
+    }
+
+    #status-box.status-a {
+      border: 3px solid #2ACAEA;
+      background-color: rgba(42, 202, 234, 0.15);
+      color: #2ACAEA;
+      box-shadow: 0 0 30px rgba(42, 202, 234, 0.45);
+      animation: pulseA 2s infinite;
+    }
+    #status-box.status-b {
+      border: 3px solid #F4D35E;
+      background-color: rgba(244, 211, 94, 0.15);
+      color: #F4D35E;
+      box-shadow: 0 0 30px rgba(244, 211, 94, 0.45);
+      animation: pulseB 2s infinite;
+    }
+    #status-box.status-waiting {
+      border: 1px dashed #444;
+      background-color: #1A1E27;
+      color: #888;
+      box-shadow: none;
+      animation: none;
+    }
+
+    @keyframes pulseA {
+      0%, 100% { box-shadow: 0 0 20px rgba(42,202,234,0.4); }
+      50%       { box-shadow: 0 0 40px rgba(42,202,234,0.8); }
+    }
+    @keyframes pulseB {
+      0%, 100% { box-shadow: 0 0 20px rgba(244,211,94,0.4); }
+      50%       { box-shadow: 0 0 40px rgba(244,211,94,0.8); }
+    }
+
+    #status-icon { font-size: 2.5rem; margin-bottom: 12px; }
+    #status-text { line-height: 1.4; }
+
+    /* ---- CONVEYOR IMAGE ---- */
+    #conveyor-img {
+      width: 100%;
+      max-width: 520px;
+      border-radius: 14px;
+      margin-top: 8px;
+      opacity: 0.92;
+      border: 1px solid #30363D;
+      display: block;
+    }
+  </style>
+</head>
+<body>
+
+  <!-- SIDEBAR -->
+  <aside id="sidebar">
+    <h2>⚙️ Sensor Controls</h2>
+
+    <div class="toggle-row">
+      <label for="toggle-a">Activate Section A</label>
+      <label class="switch">
+        <input type="checkbox" id="toggle-a" />
+        <span class="slider"></span>
+      </label>
+    </div>
+
+    <div class="toggle-row">
+      <label for="toggle-b">Activate Section B</label>
+      <label class="switch">
+        <input type="checkbox" id="toggle-b" />
+        <span class="slider yellow"></span>
+      </label>
+    </div>
+  </aside>
+
+  <!-- MAIN CONTENT -->
+  <main id="main">
+    <h1 class="main-header">LeBag 🧳</h1>
+
+    <div class="info-row">
+      <span>Passenger: <b>Ronald Tan</b></span>
+      <span>Tag: <b>001</b></span>
+    </div>
+
+    <hr class="divider" />
+
+    <!-- Dynamic status box -->
+    <div id="status-box" class="status-waiting">
+      <div id="status-icon">⏳</div>
+      <div id="status-text">Waiting for bag detection...</div>
+    </div>
+
+    <!-- Conveyor image -->
+    <img id="conveyor-img" src="assets/conveyor.png" alt="Conveyor belt" onerror="this.style.display='none'" />
+  </main>
+
+  <script>
+    const toggleA   = document.getElementById('toggle-a');
+    const toggleB   = document.getElementById('toggle-b');
+    const statusBox = document.getElementById('status-box');
+    const statusIcon = document.getElementById('status-icon');
+    const statusText = document.getElementById('status-text');
+
+    // Persist state in localStorage (shared across tabs on same machine)
+    function loadState() {
+      toggleA.checked = localStorage.getItem('sectionA') === 'true';
+      toggleB.checked = localStorage.getItem('sectionB') === 'true';
+    }
+
+    function saveState() {
+      localStorage.setItem('sectionA', toggleA.checked);
+      localStorage.setItem('sectionB', toggleB.checked);
+    }
+
+    function updateUI() {
+      const a = toggleA.checked;
+      const b = toggleB.checked;
+
+      if (b) {
+        statusBox.className = 'status-b';
+        statusIcon.textContent = '';
+        statusText.innerHTML = '📍 Your Bag is in<br>SECTION B';
+      } else if (a) {
+        statusBox.className = 'status-a';
+        statusIcon.textContent = '';
+        statusText.innerHTML = '📍 Your Bag is in<br>SECTION A';
+      } else {
+        statusBox.className = 'status-waiting';
+        statusIcon.textContent = '⏳';
+        statusText.textContent = 'Waiting for bag detection...';
+      }
+    }
+
+    // Bind toggle events
+    toggleA.addEventListener('change', () => { saveState(); updateUI(); });
+    toggleB.addEventListener('change', () => { saveState(); updateUI(); });
+
+    // Poll localStorage every 2 seconds (simulates Streamlit's st.rerun)
+    function poll() {
+      loadState();
+      updateUI();
+    }
+
+    loadState();
+    updateUI();
+    setInterval(poll, 2000);
+  </script>
+</body>
+</html>
