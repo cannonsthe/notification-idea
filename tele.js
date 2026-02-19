@@ -32,13 +32,30 @@ bot.on('polling_error', (err) => {
 
 console.log('🤖 Telegram Bot is listening for /start commands...');
 
+const os = require('os');
+
+function getLocalIpAddress() {
+  const interfaces = os.networkInterfaces();
+  for (const name of Object.keys(interfaces)) {
+    for (const iface of interfaces[name]) {
+      // Skip over non-IPv4 and internal (i.e. 127.0.0.1) addresses
+      if (iface.family === 'IPv4' && !iface.internal) {
+        return iface.address;
+      }
+    }
+  }
+  return 'localhost'; // Fallback
+}
+
 // --- 2. ALERT FUNCTION ---
 function sendTelegramAlert(chatId, tagId) {
   console.log(`📡 Attempting to contact Passenger ${chatId}...`);
 
+  const ipAddress = getLocalIpAddress();
+
   const message =
     `LEBAG ALERT: Your bag (ID: ${tagId}) is now 2 minutes away from collection!\n\n` +
-    `View status here: http://10.185.186.32:8501`;
+    `View status here: http://${ipAddress}:3000`; // Assuming npx serve uses port 3000
 
   bot.sendMessage(chatId, message)
     .then(() => console.log('✅ SUCCESS: Notification sent to phone!'))

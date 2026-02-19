@@ -1,193 +1,488 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>LeBag - Smart Tracker</title>
-  <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg'><text y='32' font-size='32'>🧳</text></svg>" />
+  <link rel="icon"
+    href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg'><text y='32' font-size='32'>🧳</text></svg>" />
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap" rel="stylesheet" />
   <style>
-    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    *,
+    *::before,
+    *::after {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+
+    :root {
+      --bg-color: #050505;
+      --glass-bg: rgba(20, 20, 25, 0.4);
+      --glass-border: rgba(255, 255, 255, 0.08);
+      --text-main: #FFFFFF;
+      --text-muted: #8892B0;
+      --accent-cyan: #00F0FF;
+      --accent-cyan-glow: rgba(0, 240, 255, 0.5);
+      --accent-gold: #FFC000;
+      --accent-gold-glow: rgba(255, 192, 0, 0.5);
+      --panel-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.5);
+    }
 
     body {
-      font-family: 'Inter', sans-serif;
-      background-color: #0E1117;
-      color: #FFFFFF;
+      font-family: 'Inter', -apple-system, sans-serif;
+      background-color: var(--bg-color);
+      /* Subtle animated radial gradient background */
+      background-image:
+        radial-gradient(circle at 15% 50%, rgba(0, 240, 255, 0.04), transparent 25%),
+        radial-gradient(circle at 85% 30%, rgba(255, 192, 0, 0.04), transparent 25%);
+      color: var(--text-main);
       min-height: 100vh;
       display: flex;
       flex-direction: column;
       align-items: center;
+      overflow-x: hidden;
+    }
+
+    /* ---- GLASSMORPHISM UTILS ---- */
+    .glass-panel {
+      background: var(--glass-bg);
+      backdrop-filter: blur(16px);
+      -webkit-backdrop-filter: blur(16px);
+      border: 1px solid var(--glass-border);
+      box-shadow: var(--panel-shadow);
     }
 
     /* ---- SIDEBAR ---- */
     #sidebar {
       position: fixed;
-      top: 0; left: 0;
+      top: 0;
+      left: 0;
       height: 100vh;
-      width: 260px;
-      background: #161B22;
-      border-right: 1px solid #30363D;
-      padding: 28px 20px;
+      width: 280px;
+      padding: 40px 24px;
       display: flex;
       flex-direction: column;
-      gap: 24px;
-      z-index: 100;
-      box-shadow: 4px 0 20px rgba(0,0,0,0.4);
+      gap: 32px;
+      z-index: 1000;
+      transition: transform 0.4s cubic-bezier(0.16, 1, 0.3, 1);
+      border-right: 1px solid var(--glass-border);
     }
 
     #sidebar h2 {
-      font-size: 1rem;
-      color: #8B949E;
-      letter-spacing: 0.05em;
+      font-size: 0.85rem;
+      color: var(--text-muted);
+      letter-spacing: 0.15em;
       text-transform: uppercase;
+      font-weight: 600;
+      margin-top: 40px;
+      /* Space for mobile header */
+      margin-bottom: -10px;
     }
 
+    /* ---- MOBILE MENU BUTTON ---- */
+    #mobile-menu-btn {
+      display: none;
+      position: fixed;
+      top: 24px;
+      left: 24px;
+      z-index: 1001;
+      background: var(--glass-bg);
+      backdrop-filter: blur(8px);
+      border: 1px solid var(--glass-border);
+      color: white;
+      font-size: 1.2rem;
+      width: 44px;
+      height: 44px;
+      border-radius: 12px;
+      cursor: pointer;
+      box-shadow: 0 4px 16px rgba(0, 0, 0, 0.4);
+      transition: all 0.2s ease;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    #mobile-menu-btn:hover {
+      background: rgba(255, 255, 255, 0.1);
+    }
+
+    /* Overlay for mobile */
+    #sidebar-overlay {
+      display: none;
+      position: fixed;
+      inset: 0;
+      background: rgba(0, 0, 0, 0.7);
+      backdrop-filter: blur(4px);
+      z-index: 999;
+      opacity: 0;
+      transition: opacity 0.4s ease;
+    }
+
+    /* ---- MODERN TOGGLES ---- */
     .toggle-row {
       display: flex;
       align-items: center;
       justify-content: space-between;
-      gap: 12px;
+      gap: 16px;
+      padding: 12px 16px;
+      border-radius: 12px;
+      transition: background 0.2s ease;
     }
 
-    .toggle-row label {
+    .toggle-row:hover {
+      background: rgba(255, 255, 255, 0.03);
+    }
+
+    .toggle-row label.toggle-label {
       font-size: 0.95rem;
-      color: #E6EDF3;
+      color: #E2E8F0;
+      font-weight: 500;
       cursor: pointer;
+      user-select: none;
     }
 
-    /* Toggle switch */
     .switch {
       position: relative;
       display: inline-block;
-      width: 48px;
-      height: 26px;
+      width: 52px;
+      height: 28px;
       flex-shrink: 0;
     }
-    .switch input { opacity: 0; width: 0; height: 0; }
+
+    .switch input {
+      opacity: 0;
+      width: 0;
+      height: 0;
+    }
+
     .slider {
       position: absolute;
       cursor: pointer;
       inset: 0;
-      background-color: #30363D;
-      border-radius: 26px;
-      transition: 0.3s;
+      background-color: rgba(255, 255, 255, 0.1);
+      border: 1px solid rgba(255, 255, 255, 0.05);
+      border-radius: 34px;
+      transition: 0.4s cubic-bezier(0.4, 0, 0.2, 1);
     }
+
     .slider::before {
       content: "";
       position: absolute;
-      height: 18px; width: 18px;
-      left: 4px; bottom: 4px;
-      background-color: white;
+      height: 20px;
+      width: 20px;
+      left: 3px;
+      bottom: 3px;
+      background-color: #8892B0;
       border-radius: 50%;
-      transition: 0.3s;
+      transition: 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+      box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
     }
-    input:checked + .slider { background-color: #2ACAEA; }
-    input:checked + .slider.yellow { background-color: #F4D35E; }
-    input:checked + .slider::before { transform: translateX(22px); }
+
+    input:checked+.slider {
+      background-color: rgba(0, 240, 255, 0.15);
+      border-color: var(--accent-cyan);
+    }
+
+    input:checked+.slider.yellow {
+      background-color: rgba(255, 192, 0, 0.15);
+      border-color: var(--accent-gold);
+    }
+
+    input:checked+.slider::before {
+      transform: translateX(24px);
+      background-color: var(--accent-cyan);
+      box-shadow: 0 0 10px var(--accent-cyan-glow);
+    }
+
+    input:checked+.slider.yellow::before {
+      background-color: var(--accent-gold);
+      box-shadow: 0 0 10px var(--accent-gold-glow);
+    }
 
     /* ---- MAIN CONTENT ---- */
     #main {
-      margin-left: 260px;
-      padding: 40px 40px 60px;
-      width: calc(100% - 260px);
-      max-width: 900px;
+      margin-left: 280px;
+      padding: 60px 40px;
+      width: calc(100% - 280px);
+      max-width: 1000px;
       display: flex;
       flex-direction: column;
       align-items: center;
       gap: 0;
+      transition: margin-left 0.4s ease, width 0.4s ease;
     }
 
     h1.main-header {
-      font-size: 2.5rem;
-      font-weight: 700;
+      font-size: 3.5rem;
+      font-weight: 800;
+      letter-spacing: -0.02em;
       text-align: center;
-      margin-bottom: 20px;
-      text-shadow: 0px 0px 10px rgba(255,255,255,0.2);
+      margin-bottom: 32px;
+      background: linear-gradient(135deg, #FFFFFF 0%, #A0AABF 100%);
+      -webkit-background-clip: text;
+      background-clip: text;
+      -webkit-text-fill-color: transparent;
+      filter: drop-shadow(0 4px 8px rgba(0, 0, 0, 0.5));
     }
 
     .info-row {
       display: flex;
-      gap: 40px;
-      margin-bottom: 24px;
-      font-size: 0.95rem;
-      color: #C9D1D9;
+      gap: 48px;
+      margin-bottom: 40px;
+      font-size: 1.05rem;
+      color: var(--text-muted);
+      background: var(--glass-bg);
+      padding: 16px 32px;
+      border-radius: 100px;
+      border: 1px solid var(--glass-border);
     }
-    .info-row span b { color: #FFFFFF; }
 
-    hr.divider {
-      width: 100%;
-      border: none;
-      border-top: 1px solid #30363D;
-      margin-bottom: 28px;
+    .info-row span b {
+      color: var(--text-main);
+      font-weight: 600;
+      margin-left: 8px;
     }
 
     /* ---- STATUS BOX ---- */
-    #status-box {
+    #status-wrapper {
+      position: relative;
       width: 100%;
-      max-width: 520px;
-      padding: 36px 24px;
-      border-radius: 18px;
+      max-width: 600px;
+      margin-bottom: 40px;
+    }
+
+    /* The glowing background behind the status box */
+    .status-glow {
+      position: absolute;
+      inset: -2px;
+      border-radius: 26px;
+      background: transparent;
+      z-index: 0;
+      filter: blur(15px);
+      opacity: 0;
+      transition: opacity 0.5s ease;
+    }
+
+    #status-box {
+      position: relative;
+      width: 100%;
+      padding: 48px 32px;
+      border-radius: 24px;
       text-align: center;
       font-weight: 700;
-      font-size: 1.5rem;
-      margin-bottom: 28px;
-      transition: all 0.4s ease;
+      font-size: 1.75rem;
+      z-index: 1;
+      transition: all 0.5s ease;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      min-height: 220px;
+    }
+
+    /* Waiting State */
+    #status-box.status-waiting {
+      background: var(--glass-bg);
+      border: 1px solid rgba(255, 255, 255, 0.05);
+      color: var(--text-muted);
+    }
+
+    /* Active States */
+    #status-wrapper.active-a .status-glow {
+      background: var(--accent-cyan);
+      opacity: 0.3;
+      animation: breatheA 3s ease-in-out infinite alternate;
     }
 
     #status-box.status-a {
-      border: 3px solid #2ACAEA;
-      background-color: rgba(42, 202, 234, 0.15);
-      color: #2ACAEA;
-      box-shadow: 0 0 30px rgba(42, 202, 234, 0.45);
-      animation: pulseA 2s infinite;
+      background: rgba(0, 240, 255, 0.05);
+      border: 1px solid rgba(0, 240, 255, 0.3);
+      color: var(--text-main);
+      box-shadow: inset 0 0 40px rgba(0, 240, 255, 0.05);
     }
+
+    #status-box.status-a #status-text-highlight {
+      color: var(--accent-cyan);
+      text-shadow: 0 0 20px var(--accent-cyan-glow);
+    }
+
+    #status-wrapper.active-b .status-glow {
+      background: var(--accent-gold);
+      opacity: 0.3;
+      animation: breatheB 3s ease-in-out infinite alternate;
+    }
+
     #status-box.status-b {
-      border: 3px solid #F4D35E;
-      background-color: rgba(244, 211, 94, 0.15);
-      color: #F4D35E;
-      box-shadow: 0 0 30px rgba(244, 211, 94, 0.45);
-      animation: pulseB 2s infinite;
-    }
-    #status-box.status-waiting {
-      border: 1px dashed #444;
-      background-color: #1A1E27;
-      color: #888;
-      box-shadow: none;
-      animation: none;
+      background: rgba(255, 192, 0, 0.05);
+      border: 1px solid rgba(255, 192, 0, 0.3);
+      color: var(--text-main);
+      box-shadow: inset 0 0 40px rgba(255, 192, 0, 0.05);
     }
 
-    @keyframes pulseA {
-      0%, 100% { box-shadow: 0 0 20px rgba(42,202,234,0.4); }
-      50%       { box-shadow: 0 0 40px rgba(42,202,234,0.8); }
-    }
-    @keyframes pulseB {
-      0%, 100% { box-shadow: 0 0 20px rgba(244,211,94,0.4); }
-      50%       { box-shadow: 0 0 40px rgba(244,211,94,0.8); }
+    #status-box.status-b #status-text-highlight {
+      color: var(--accent-gold);
+      text-shadow: 0 0 20px var(--accent-gold-glow);
     }
 
-    #status-icon { font-size: 2.5rem; margin-bottom: 12px; }
-    #status-text { line-height: 1.4; }
+    @keyframes breatheA {
+      0% {
+        opacity: 0.15;
+        transform: scale(0.98);
+      }
+
+      100% {
+        opacity: 0.4;
+        transform: scale(1.02);
+      }
+    }
+
+    @keyframes breatheB {
+      0% {
+        opacity: 0.15;
+        transform: scale(0.98);
+      }
+
+      100% {
+        opacity: 0.4;
+        transform: scale(1.02);
+      }
+    }
+
+    #status-icon {
+      font-size: 3.5rem;
+      margin-bottom: 20px;
+      filter: drop-shadow(0 4px 8px rgba(0, 0, 0, 0.4));
+      transition: transform 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+    }
+
+    #status-box:not(.status-waiting) #status-icon {
+      transform: scale(1.1) translateY(-5px);
+    }
+
+    #status-text {
+      line-height: 1.4;
+      font-weight: 500;
+    }
+
+    #status-text-highlight {
+      display: block;
+      font-size: 2.2rem;
+      font-weight: 800;
+      margin-top: 8px;
+    }
 
     /* ---- CONVEYOR IMAGE ---- */
+    .image-container {
+      width: 100%;
+      max-width: 600px;
+      position: relative;
+      border-radius: 24px;
+      overflow: hidden;
+      box-shadow: 0 20px 40px rgba(0, 0, 0, 0.6);
+      border: 1px solid var(--glass-border);
+    }
+
+    /* Inner shadow overlay for image blending */
+    .image-container::after {
+      content: "";
+      position: absolute;
+      inset: 0;
+      box-shadow: inset 0 0 30px rgba(0, 0, 0, 0.8);
+      pointer-events: none;
+    }
+
     #conveyor-img {
       width: 100%;
-      max-width: 520px;
-      border-radius: 14px;
-      margin-top: 8px;
-      opacity: 0.92;
-      border: 1px solid #30363D;
       display: block;
+      transition: transform 0.7s ease, filter 0.7s ease;
+      filter: brightness(0.8) contrast(1.1);
+    }
+
+    .image-container:hover #conveyor-img {
+      transform: scale(1.03);
+      filter: brightness(1) contrast(1.1);
+    }
+
+    /* ---- MEDIA QUERIES FOR MOBILE ---- */
+    @media (max-width: 768px) {
+      body {
+        background-image: none;
+      }
+
+      /* Simpler bg for mobile perf */
+
+      #sidebar {
+        transform: translateX(-100%);
+        width: 300px;
+        /* Slightly wider mobile drawer */
+      }
+
+      #sidebar.active {
+        transform: translateX(0);
+      }
+
+      #mobile-menu-btn {
+        display: flex;
+      }
+
+      #sidebar-overlay.active {
+        display: block;
+        opacity: 1;
+      }
+
+      #main {
+        margin-left: 0;
+        width: 100%;
+        padding: 100px 20px 40px;
+      }
+
+      h1.main-header {
+        font-size: 2.5rem;
+      }
+
+      .info-row {
+        flex-direction: column;
+        gap: 16px;
+        border-radius: 20px;
+        padding: 20px;
+        width: 100%;
+        max-width: 320px;
+      }
+
+      #status-box {
+        padding: 32px 20px;
+        font-size: 1.4rem;
+        min-height: 180px;
+      }
+
+      #status-text-highlight {
+        font-size: 1.8rem;
+      }
     }
   </style>
 </head>
+
 <body>
 
+  <!-- MOBILE MENU OVERLAY & BUTTON -->
+  <button id="mobile-menu-btn" aria-label="Toggle Menu">
+    <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+      stroke-linecap="round" stroke-linejoin="round">
+      <line x1="3" y1="12" x2="21" y2="12"></line>
+      <line x1="3" y1="6" x2="21" y2="6"></line>
+      <line x1="3" y1="18" x2="21" y2="18"></line>
+    </svg>
+  </button>
+  <div id="sidebar-overlay"></div>
+
   <!-- SIDEBAR -->
-  <aside id="sidebar">
+  <aside id="sidebar" class="glass-panel">
     <h2>⚙️ Sensor Controls</h2>
 
     <div class="toggle-row">
-      <label for="toggle-a">Activate Section A</label>
+      <label for="toggle-a" class="toggle-label">Activate Section A</label>
       <label class="switch">
         <input type="checkbox" id="toggle-a" />
         <span class="slider"></span>
@@ -195,7 +490,7 @@
     </div>
 
     <div class="toggle-row">
-      <label for="toggle-b">Activate Section B</label>
+      <label for="toggle-b" class="toggle-label">Activate Section B</label>
       <label class="switch">
         <input type="checkbox" id="toggle-b" />
         <span class="slider yellow"></span>
@@ -207,29 +502,47 @@
   <main id="main">
     <h1 class="main-header">LeBag 🧳</h1>
 
-    <div class="info-row">
+    <div class="info-row glass-panel">
       <span>Passenger: <b>Ronald Tan</b></span>
-      <span>Tag: <b>001</b></span>
+      <span>Tag ID: <b>001</b></span>
     </div>
 
-    <hr class="divider" />
-
-    <!-- Dynamic status box -->
-    <div id="status-box" class="status-waiting">
-      <div id="status-icon">⏳</div>
-      <div id="status-text">Waiting for bag detection...</div>
+    <!-- Dynamic status box wrapped for outer glow effect -->
+    <div id="status-wrapper">
+      <div class="status-glow"></div>
+      <div id="status-box" class="status-waiting glass-panel">
+        <div id="status-icon">⏳</div>
+        <div id="status-text">Waiting for bag detection...</div>
+      </div>
     </div>
 
-    <!-- Conveyor image -->
-    <img id="conveyor-img" src="assets/conveyor.png" alt="Conveyor belt" onerror="this.style.display='none'" />
+    <!-- Conveyor image with premium container -->
+    <div class="image-container">
+      <img id="conveyor-img" src="assets/conveyor.png" alt="Conveyor belt" onerror="this.style.display='none'" />
+    </div>
   </main>
 
   <script>
-    const toggleA   = document.getElementById('toggle-a');
-    const toggleB   = document.getElementById('toggle-b');
+    const toggleA = document.getElementById('toggle-a');
+    const toggleB = document.getElementById('toggle-b');
+    const statusWrapper = document.getElementById('status-wrapper');
     const statusBox = document.getElementById('status-box');
     const statusIcon = document.getElementById('status-icon');
     const statusText = document.getElementById('status-text');
+
+    // Mobile menu elements
+    const sidebar = document.getElementById('sidebar');
+    const menuBtn = document.getElementById('mobile-menu-btn');
+    const overlay = document.getElementById('sidebar-overlay');
+
+    // Toggle Mobile Sidebar
+    function toggleSidebar() {
+      sidebar.classList.toggle('active');
+      overlay.classList.toggle('active');
+    }
+
+    menuBtn.addEventListener('click', toggleSidebar);
+    overlay.addEventListener('click', toggleSidebar);
 
     // Persist state in localStorage (shared across tabs on same machine)
     function loadState() {
@@ -246,16 +559,21 @@
       const a = toggleA.checked;
       const b = toggleB.checked;
 
+      // Reset wrapper glow state
+      statusWrapper.className = '';
+
       if (b) {
-        statusBox.className = 'status-b';
-        statusIcon.textContent = '';
-        statusText.innerHTML = '📍 Your Bag is in<br>SECTION B';
+        statusWrapper.classList.add('active-b');
+        statusBox.className = 'status-b glass-panel';
+        statusIcon.textContent = '🧳';
+        statusText.innerHTML = 'Your Bag is in<span id="status-text-highlight">SECTION B</span>';
       } else if (a) {
-        statusBox.className = 'status-a';
-        statusIcon.textContent = '';
-        statusText.innerHTML = '📍 Your Bag is in<br>SECTION A';
+        statusWrapper.classList.add('active-a');
+        statusBox.className = 'status-a glass-panel';
+        statusIcon.textContent = '🧳';
+        statusText.innerHTML = 'Your Bag is in<span id="status-text-highlight">SECTION A</span>';
       } else {
-        statusBox.className = 'status-waiting';
+        statusBox.className = 'status-waiting glass-panel';
         statusIcon.textContent = '⏳';
         statusText.textContent = 'Waiting for bag detection...';
       }
@@ -276,4 +594,5 @@
     setInterval(poll, 2000);
   </script>
 </body>
+
 </html>
