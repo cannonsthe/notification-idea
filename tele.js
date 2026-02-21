@@ -72,7 +72,7 @@ const rl = readline.createInterface({
 
 console.log('\n-------------------------------------------------');
 console.log('🤖 BAGGAGE SYSTEM SIMULATION STARTED');
-console.log("   Tags: TAG_001 | TAG_002 | TAG_003 | TAG_004 | TAG_005");
+console.log("   Tags: 001 | 002 | 003 | 004 | 005");
 console.log('-------------------------------------------------');
 
 function promptScan() {
