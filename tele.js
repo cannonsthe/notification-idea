@@ -6,13 +6,15 @@ const readline = require('readline');
 // 👇 YOUR DETAILS
 // ==========================================
 const BOT_TOKEN = process.env.BOT_TOKEN;
-const MY_CHAT_ID = process.env.MY_CHAT_ID;
 // ==========================================
 
-// Database Simulation
+// Database Simulation — map each tag to a Telegram chat ID via .env
 const PASSENGER_DB = {
-  'TAG_001': MY_CHAT_ID,
-  'TAG_002': '987654321',
+  '001': process.env.CHAT_ID_001,
+  '002': process.env.CHAT_ID_002,
+  '003': process.env.CHAT_ID_003,
+  '004': process.env.CHAT_ID_004,
+  '005': process.env.CHAT_ID_005,
 };
 
 // --- 1. TELEGRAM BOT SETUP ---
@@ -70,7 +72,7 @@ const rl = readline.createInterface({
 
 console.log('\n-------------------------------------------------');
 console.log('🤖 BAGGAGE SYSTEM SIMULATION STARTED');
-console.log("   (Type 'TAG_001' to test)");
+console.log("   Tags: TAG_001 | TAG_002 | TAG_003 | TAG_004 | TAG_005");
 console.log('-------------------------------------------------');
 
 function promptScan() {
