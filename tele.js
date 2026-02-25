@@ -1,4 +1,5 @@
 require('dotenv').config();
+const fs = require('fs');
 const TelegramBot = require('node-telegram-bot-api');
 const readline = require('readline');
 
@@ -16,6 +17,26 @@ const PASSENGER_DB = {
   '004': process.env.CHAT_ID_004,
   '005': process.env.CHAT_ID_005,
 };
+
+// Name lookup — map each tag to a passenger name via .env
+const NAME_DB = {
+  '001': process.env.NAME_001 || 'Passenger 001',
+  '002': process.env.NAME_002 || 'Passenger 002',
+  '003': process.env.NAME_003 || 'Passenger 003',
+  '004': process.env.NAME_004 || 'Passenger 004',
+  '005': process.env.NAME_005 || 'Passenger 005',
+};
+
+// Write the current scan info to a JSON file so index.html can display it dynamically
+function writeCurrentScan(tagId) {
+  const data = {
+    tagId: tagId,
+    name: NAME_DB[tagId] || 'Unknown',
+    scannedAt: new Date().toISOString(),
+  };
+  fs.writeFileSync('current_scan.json', JSON.stringify(data, null, 2));
+  console.log(`📝 Saved scan to current_scan.json: Tag ${tagId} → ${data.name}`);
+}
 
 // --- 1. TELEGRAM BOT SETUP ---
 const bot = new TelegramBot(BOT_TOKEN, { polling: true });
@@ -57,7 +78,7 @@ function sendTelegramAlert(chatId, tagId) {
 
   const message =
     `LEBAG ALERT: Your bag (ID: ${tagId}) is now 2 minutes away from collection!\n\n` +
-    `View status here: http://${ipAddress}:3000`; // Assuming npx serve uses port 3000
+    `View status here: http://${ipAddress}:3000?tag=${tagId}`;
 
   bot.sendMessage(chatId, message)
     .then(() => console.log('✅ SUCCESS: Notification sent to phone!'))
@@ -90,6 +111,7 @@ function promptScan() {
     } else if (PASSENGER_DB[tag]) {
       const userId = PASSENGER_DB[tag];
       console.log(`👤 OWNER FOUND! Belongs to ID ${userId}`);
+      writeCurrentScan(tag);
       sendTelegramAlert(userId, tag);
       promptScan();
     } else {

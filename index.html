@@ -498,8 +498,8 @@
     <h1 class="main-header">LeBag 🧳</h1>
 
     <div class="info-row glass-panel">
-      <span>Passenger: <b>Ronald Tan</b></span>
-      <span>Tag ID: <b>001</b></span>
+      <span>Passenger: <b id="passenger-name">—</b></span>
+      <span>Tag ID: <b id="passenger-tag">—</b></span>
     </div>
 
     <!-- Dynamic status box wrapped for outer glow effect -->
@@ -584,9 +584,20 @@
       updateUI();
     }
 
-    loadState();
-    updateUI();
-    setInterval(poll, 2000);
+    // --- DYNAMIC PASSENGER INFO ---
+    const PASSENGERS = {
+      '001': 'Marcus',
+      '002': 'Leonard',
+      '003': 'Ashok',
+      '004': 'Balaji',
+      '005': '',
+    };
+
+    const tag = new URLSearchParams(window.location.search).get('tag');
+    const name = tag ? (PASSENGERS[tag] || 'Unknown') : '—';
+
+    document.getElementById('passenger-name').textContent = name;
+    document.getElementById('passenger-tag').textContent = tag || '—';
   </script>
 </body>
 
