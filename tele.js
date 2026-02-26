@@ -1,7 +1,65 @@
 require('dotenv').config();
 const fs = require('fs');
+const http = require('http');
+const path = require('path');
 const TelegramBot = require('node-telegram-bot-api');
 const readline = require('readline');
+
+// --- 0. BUILT-IN HTTP SERVER (serves index.html + assets to phones on the same network) ---
+const PORT = 3000;
+const MIME_TYPES = {
+  '.html': 'text/html',
+  '.json': 'application/json',
+  '.png': 'image/png',
+  '.jpg': 'image/jpeg',
+  '.jpeg': 'image/jpeg',
+  '.gif': 'image/gif',
+  '.svg': 'image/svg+xml',
+  '.css': 'text/css',
+  '.js': 'application/javascript',
+};
+
+http.createServer((req, res) => {
+  // Strip query string to get clean path
+  const urlPath = req.url.split('?')[0];
+
+  if (urlPath === '/current_scan.json') {
+    // Serve live scan data
+    try {
+      const data = fs.readFileSync(path.join(__dirname, 'current_scan.json'));
+      res.writeHead(200, { 'Content-Type': 'application/json' });
+      res.end(data);
+    } catch {
+      res.writeHead(404);
+      res.end('{}');
+    }
+  } else if (urlPath.startsWith('/assets/')) {
+    // Serve files from the assets folder
+    const filePath = path.join(__dirname, urlPath);
+    const ext = path.extname(filePath).toLowerCase();
+    try {
+      const data = fs.readFileSync(filePath);
+      res.writeHead(200, { 'Content-Type': MIME_TYPES[ext] || 'application/octet-stream' });
+      res.end(data);
+    } catch {
+      res.writeHead(404);
+      res.end('File not found');
+    }
+  } else {
+    // Serve index.html for everything else (including ?tag=xxx links)
+    try {
+      const html = fs.readFileSync(path.join(__dirname, 'index.html'));
+      res.writeHead(200, { 'Content-Type': 'text/html' });
+      res.end(html);
+    } catch {
+      res.writeHead(500);
+      res.end('Error loading page');
+    }
+  }
+}).listen(PORT, () => {
+  const ip = getLocalIpAddress();
+  console.log(`🌐 Web server running at http://${ip}:${PORT}`);
+});
 
 // ==========================================
 // 👇 YOUR DETAILS
@@ -74,11 +132,11 @@ function getLocalIpAddress() {
 function sendTelegramAlert(chatId, tagId) {
   console.log(`📡 Attempting to contact Passenger ${chatId}...`);
 
-  const ipAddress = getLocalIpAddress();
+  const baseUrl = process.env.PUBLIC_URL || `http://${getLocalIpAddress()}:3000`;
 
   const message =
     `LEBAG ALERT: Your bag (ID: ${tagId}) is now 2 minutes away from collection!\n\n` +
-    `View status here: http://${ipAddress}:3000?tag=${tagId}`;
+    `View status here: ${baseUrl}?tag=${tagId}`;
 
   bot.sendMessage(chatId, message)
     .then(() => console.log('✅ SUCCESS: Notification sent to phone!'))
